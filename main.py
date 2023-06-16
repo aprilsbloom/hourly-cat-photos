@@ -58,7 +58,7 @@ def post_mastodon():
 
     try:
         media = mastodon_client.media_post('cat')
-        post = mastodon_client.status_post(media_ids=media)
+        post = mastodon_client.status_post(media_ids=media) # type: ignore
         log.success(f'Posted image to Mastodon! Link: {post["url"]}\n')
         return
 
@@ -88,7 +88,7 @@ def post_twitter():
 
     try:
         img = twitter_client.chunked_upload(filename='cat', media_category="tweet_image").media_id_string
-    except tweepy.errors.BadRequest as e:
+    except tweepy.errors.BadRequest as e: # type: ignore
         error_msg = str(e)
         log.error(f'Error while uploading image to Twitter: {error_msg}')
         log.info('Trying again...\n')
@@ -132,13 +132,13 @@ def fetch_img():
     with open('cat', 'wb') as file:
         file.write(response.content)
 
-    file = filetype.guess('cat')
+    _file = filetype.guess('cat')
     good_extensions = ['jpg', 'png', 'jpeg', 'webp']
 
-    if file.extension in good_extensions:
+    if _file is not None and _file.extension in good_extensions:
         post_twitter()
     else:
-        log.error('Image is a gif! Trying again...\n')
+        log.error('Image is not a valid format! Trying again...\n')
         fetch_img()
         return
 
