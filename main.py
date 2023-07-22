@@ -8,7 +8,6 @@ import pytumblr
 import requests
 from datetime import datetime
 from mastodon import Mastodon
-from requests_oauthlib import OAuth1
 
 
 # <-- Functions -->
@@ -58,7 +57,7 @@ def post_mastodon():
 
     try:
         media = mastodon_client.media_post('cat')
-        post = mastodon_client.status_post(media_ids=media) # type: ignore
+        post = mastodon_client.status_post(status="", media_ids=media)
         log.success(f'Posted image to Mastodon! Link: {post["url"]}\n')
         return
 
@@ -69,8 +68,8 @@ def post_mastodon():
         return
 
 
-
 def post_tumblr():
+    print('')
     log.info('Uploading image to Tumblr')
     try:
         response = tumblr_client.create_photo(blogname="hourlycatphotos", state="published", tags=["Cat"], data="cat")
@@ -84,11 +83,12 @@ def post_tumblr():
 
 
 def post_twitter():
+    print('')
     log.info('Uploading image to Twitter')
 
     try:
-        img = twitter_client.chunked_upload(filename='cat', media_category="tweet_image").media_id_string
-    except tweepy.errors.BadRequest as e: # type: ignore
+        img = twitter_v1.chunked_upload(filename='cat', media_category="tweet_image").media_id_string
+    except tweepy.errors.BadRequest as e:
         error_msg = str(e)
         log.error(f'Error while uploading image to Twitter: {error_msg}')
         log.info('Trying again...\n')
@@ -97,15 +97,13 @@ def post_twitter():
 
 
     log.info('Tweeting image')
-    response = requests.post(
-        url = 'https://api.twitter.com/2/tweets',
-        json = {
-            "media": {
-                "media_ids": [img]
-            }
-        },
-        auth = OAuth
-    )
+    try:
+        response = twitter_v2.tweet.create(media_ids=[img])
+    except Exception as e:
+        log.error(f'Error while tweeting image: {e}')
+        log.info('Trying again...\n')
+        fetch_img()
+        return
 
     if response.status_code == 201:
         log.success(f'Tweeted image! Link: https://twitter.com/{TWITTER["username"]}/status/{response.json()["data"]["id"]}')
@@ -121,7 +119,14 @@ def post_twitter():
 def fetch_img():
     log.info('Fetching image')
     img = requests.get('https://api.thecatapi.com/v1/images/search?mime_types=jpg,png', headers={'x-api-key': CATAPI_KEY})
-    img_url = img.json()[0]['url']
+
+    try:
+        img_url = img.json()[0]['url']
+    except:
+        log.error('Error while fetching image! Trying again...\n')
+        fetch_img()
+        return
+
     response = requests.get(img_url)
 
     try:
@@ -129,16 +134,16 @@ def fetch_img():
     except:
         pass
 
-    with open('cat', 'wb') as file:
-        file.write(response.content)
+    with open('cat', 'wb') as _file:
+        _file.write(response.content)
 
     _file = filetype.guess('cat')
     good_extensions = ['jpg', 'png', 'jpeg', 'webp']
 
-    if _file is not None and _file.extension in good_extensions:
+    if _file.extension in good_extensions:
         post_twitter()
     else:
-        log.error('Image is not a valid format! Trying again...\n')
+        log.error('Image is a gif! Trying again...\n')
         fetch_img()
         return
 
@@ -218,13 +223,6 @@ TWITTER = {
     "access_token_secret": config["twitter"]["access_token_secret"]
 }
 
-OAuth = OAuth1(
-    TWITTER["consumer_key"],
-    TWITTER["consumer_secret"],
-    TWITTER['access_token'],
-    TWITTER['access_token_secret']
-)
-
 tweepy_auth = tweepy.OAuth1UserHandler(
     consumer_key=TWITTER["consumer_key"],
     consumer_secret=TWITTER["consumer_secret"],
@@ -232,7 +230,9 @@ tweepy_auth = tweepy.OAuth1UserHandler(
     access_token_secret=TWITTER["access_token_secret"]
 )
 
-twitter_client = tweepy.API(tweepy_auth, wait_on_rate_limit=True)
+
+twitter_v1 = tweepy.API(tweepy_auth, wait_on_rate_limit=True)
+twitter_v2 = tweepy.Client(consumer_key=TWITTER["consumer_key"], consumer_secret=TWITTER["consumer_secret"], access_token=TWITTER["access_token"], access_token_secret=TWITTER["access_token_secret"])
 
 
 # <-- Main -->
