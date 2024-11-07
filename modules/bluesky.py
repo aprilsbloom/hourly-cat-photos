@@ -33,5 +33,5 @@ def bluesky():
 		log.info(f'Posted image to Bluesky! Link: https://bsky.app/profile/{cfg.get("bluesky.username")}/{url}')
 		return True
 	except Exception:
-		log.error('Failed to send image to Bluesky.')
+		log.error(f'Failed to send image to Bluesky: {traceback.format_exc()}')
 		return False

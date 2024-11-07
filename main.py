@@ -52,16 +52,28 @@ async def fetch_img():
 
 	# if everything is successful, post the image to all the platforms
 	if cfg.get('twitter.enabled'):
-		twitter()
+		try:
+			twitter()
+		except Exception:
+			log.error('Failed to post to Twitter.')
 
 	if cfg.get('tumblr.enabled'):
-		tumblr()
+		try:
+			tumblr()
+		except Exception:
+			log.error('Failed to post to Tumblr.')
 
 	if cfg.get('mastodon.enabled'):
-		mastodon()
+		try:
+			mastodon()
+		except Exception:
+			log.error('Failed to post to Mastodon.')
 
 	if cfg.get('bluesky.enabled'):
-		bluesky()
+		try:
+			bluesky()
+		except Exception:
+			log.error('Failed to post to Bluesky.')
 
 	print()
 
