@@ -3,7 +3,7 @@ import traceback
 from mastodon import Mastodon
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.globals import cfg, log
+from utils.globals import IMG_PATH, cfg, log
 
 
 @retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
@@ -23,9 +23,9 @@ def mastodon():
 	log.info('Posting image to Mastodon')
 
 	try:
-		media = mastodon.media_post('img.jpg')
+		media = mastodon.media_post(IMG_PATH)
 		post = mastodon.status_post(status="", media_ids=media)
-		log.success(f'Posted image to Mastodon! Link: {post["url"]}\n')
+		log.success(f'Posted image to Mastodon! Link: {post["url"]}')
 		return True
 	except Exception:
 		log.error(f'An error occurred while posting the image on Mastodon: {traceback.format_exc()}')

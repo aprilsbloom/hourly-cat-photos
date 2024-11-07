@@ -5,8 +5,9 @@ from datetime import datetime, timedelta
 import filetype
 import requests
 
-from modules import mastodon, tumblr, twitter
-from utils.globals import IMG_EXTENSIONS, cfg, log
+from modules import bluesky, mastodon, tumblr, twitter
+from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
+
 
 async def fetch_img():
 	# ensure at least one site is enabled otherwise we're wasting our time
@@ -30,21 +31,21 @@ async def fetch_img():
 
 	# if everything is successful, fetch the image and write it to a file
 	res = requests.get(url)
-	if os.path.exists('img.jpg'):
+	if os.path.exists(IMG_PATH):
 		try:
-			os.remove('img.jpg')
+			os.remove(IMG_PATH)
 		except Exception:
-			log.error('Failed to remove img.jpg.')
+			log.error(f'Failed to remove {IMG_PATH}.')
 
 	try:
-		with open('img.jpg', 'wb') as f:
+		with open(IMG_PATH, 'wb') as f:
 			f.write(res.content)
 	except Exception:
 		log.error('Failed to write the fetched image.')
 		return
 
 	# check if the image is actually supported
-	img_type = filetype.guess('img.jpg')
+	img_type = filetype.guess(IMG_PATH)
 	if img_type is None or img_type.extension not in IMG_EXTENSIONS:
 		log.error('TheCatAPI returned an invalid image.')
 		return False
@@ -53,17 +54,22 @@ async def fetch_img():
 	if cfg.get('twitter.enabled'):
 		twitter()
 
+	if cfg.get('tumblr.enabled'):
+		tumblr()
+
 	if cfg.get('mastodon.enabled'):
 		mastodon()
 
-	if cfg.get('tumblr.enabled'):
-		tumblr()
+	if cfg.get('bluesky.enabled'):
+		bluesky()
+
+	print()
 
 async def main():
 	while True:
 		current_time = datetime.now()
 		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute)
-		log.info(f'Posting at: {goal_timestamp.strftime('%H:%M:%S')}')
+		log.info(f'Posting at: {goal_timestamp.strftime("%H:%M:%S")}')
 		await asyncio.sleep((goal_timestamp - current_time).total_seconds())
 		await fetch_img()
 

@@ -1,2 +1,3 @@
-config.json
-cat
+*.json
+*.jpg
+__pycache__/
