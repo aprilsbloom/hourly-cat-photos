@@ -80,7 +80,7 @@ async def fetch_img():
 async def main():
 	while True:
 		current_time = datetime.now()
-		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute)
+		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second, microseconds=-current_time.microsecond)
 		log.info(f'Posting at: {goal_timestamp.strftime("%H:%M:%S")}')
 		await asyncio.sleep((goal_timestamp - current_time).total_seconds())
 		await fetch_img()
