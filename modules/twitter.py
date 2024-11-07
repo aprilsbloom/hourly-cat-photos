@@ -1,9 +1,12 @@
-import tweepy
 import traceback
-from tenacity import retry, stop_after_attempt, retry_if_result
-from utils.globals import log, cfg
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: result is False))
+import tweepy
+from tenacity import retry, retry_if_result, stop_after_attempt
+
+from utils.globals import cfg, log
+
+
+@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
 def twitter():
 	try:
 		consumer_key = cfg.get('twitter.consumer_key')
@@ -25,7 +28,7 @@ def twitter():
 			access_token=access_token,
 			access_token_secret=access_token_secret
 		)
-	except Exception as e:
+	except Exception:
 		log.error(f'Error while authenticating to Twitter: {traceback.format_exc()}')
 		log.info('Trying again...\n')
 		return
@@ -34,7 +37,7 @@ def twitter():
 
 	try:
 		img = v1.chunked_upload(filename='img.jpg', media_category="tweet_image").media_id_string
-	except Exception as e:
+	except Exception:
 		log.error(f'An error occured while uploading the image to Twitter: {traceback.format_exc()}')
 		log.info('Trying again...\n')
 		return
@@ -42,14 +45,15 @@ def twitter():
 	log.info('Posting image to Twitter')
 	try:
 		response = v2.create_tweet(text = "", media_ids = [ img ])
-	except Exception as e:
+	except Exception:
 		log.error(f'An error occured while posting the image on Twitter: {traceback.format_exc()}')
 		log.info('Trying again...\n')
 		return
 
-	if response.data and response.errors == []:
-		log.success(f'Tweeted image! Link: https://twitter.com/i/status/{response.data["id"]}')
+	if response.data and response.errors == []: # type: ignore
+		log.success(f'Tweeted image! Link: https://twitter.com/i/status/{response.data["id"]}') # type: ignore
+		return True
 	else:
 		log.error('Error while posting the image!')
-		log.error(f'Error: {response.errors}\n')
+		log.error(f'Error: {response.errors}\n') # type: ignore
 		return

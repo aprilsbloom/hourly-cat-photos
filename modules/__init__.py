@@ -1,3 +1,5 @@
-from modules.twitter import *
-from modules.mastodon import *
-from modules.tumblr import *
+from modules.twitter import twitter
+from modules.mastodon import mastodon
+from modules.tumblr import tumblr
+
+__all__ = ['twitter', 'mastodon', 'tumblr']

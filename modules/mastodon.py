@@ -1,10 +1,12 @@
-from mastodon import Mastodon
 import traceback
-from tenacity import retry, stop_after_attempt, retry_if_result
-from utils.globals import log, cfg
+
+from mastodon import Mastodon
+from tenacity import retry, retry_if_result, stop_after_attempt
+
+from utils.globals import cfg, log
 
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: result is False))
+@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
 def mastodon():
 	try:
 		mastodon = Mastodon(
@@ -13,7 +15,7 @@ def mastodon():
 			client_secret = cfg.get('mastodon.client_secret'),
 			access_token = cfg.get('mastodon.access_token')
 		)
-	except Exception as e:
+	except Exception:
 		log.error(f'An error occurred while authenticating to Mastodon: {traceback.format_exc()}')
 		log.info('Trying again...\n')
 		return
@@ -24,8 +26,8 @@ def mastodon():
 		media = mastodon.media_post('img.jpg')
 		post = mastodon.status_post(status="", media_ids=media)
 		log.success(f'Posted image to Mastodon! Link: {post["url"]}\n')
-		return
-	except Exception as e:
+		return True
+	except Exception:
 		log.error(f'An error occurred while posting the image on Mastodon: {traceback.format_exc()}')
 		log.info('Trying again...\n')
 		return

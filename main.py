@@ -1,12 +1,14 @@
-import time
-import filetype
+import asyncio
 import os
-import requests
-from datetime import datetime
-from utils.globals import log, cfg, IMG_EXTENSIONS
-from modules import twitter, mastodon, tumblr
+from datetime import datetime, timedelta
 
-def fetch_img():
+import filetype
+import requests
+
+from modules import mastodon, tumblr, twitter
+from utils.globals import IMG_EXTENSIONS, cfg, log
+
+async def fetch_img():
 	# ensure at least one site is enabled otherwise we're wasting our time
 	if not cfg.get('twitter.enabled') and not cfg.get('mastodon.enabled') and not cfg.get('tumblr.enabled'):
 		log.error('No sites are enabled. Please enable at least one site in config.json.')
@@ -29,12 +31,15 @@ def fetch_img():
 	# if everything is successful, fetch the image and write it to a file
 	res = requests.get(url)
 	if os.path.exists('img.jpg'):
-		try: os.remove('img.jpg')
-		except: log.error('Failed to remove img.jpg.')
+		try:
+			os.remove('img.jpg')
+		except Exception:
+			log.error('Failed to remove img.jpg.')
+
 	try:
 		with open('img.jpg', 'wb') as f:
 			f.write(res.content)
-	except:
+	except Exception:
 		log.error('Failed to write the fetched image.')
 		return
 
@@ -45,18 +50,22 @@ def fetch_img():
 		return False
 
 	# if everything is successful, post the image to all the platforms
-	if cfg.get('twitter.enabled'): twitter()
-	if cfg.get('mastodon.enabled'): mastodon()
-	if cfg.get('tumblr.enabled'): tumblr()
+	if cfg.get('twitter.enabled'):
+		twitter()
 
+	if cfg.get('mastodon.enabled'):
+		mastodon()
 
+	if cfg.get('tumblr.enabled'):
+		tumblr()
 
-log.info('Waiting for the next hour...')
-previousHour = datetime.now().hour
-while True:
-	time.sleep(1)
-	currentHour = datetime.now().hour
-	if currentHour != previousHour:
-		previousHour = currentHour
-		log.info('New hour! Posting\n')
-		fetch_img()
+async def main():
+	while True:
+		current_time = datetime.now()
+		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute)
+		log.info(f'Posting at: {goal_timestamp.strftime('%H:%M:%S')}')
+		await asyncio.sleep((goal_timestamp - current_time).total_seconds())
+		await fetch_img()
+
+if __name__ == '__main__':
+	asyncio.run(main())
