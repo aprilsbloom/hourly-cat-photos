@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 import filetype
 import requests
+from PIL import Image
 
 from modules import bluesky, mastodon, tumblr, twitter
 from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
@@ -40,6 +41,26 @@ async def fetch_img():
 	try:
 		with open(IMG_PATH, 'wb') as f:
 			f.write(res.content)
+
+		log.info('Fetched image successfully. Compressing image to be under 1MB.')
+
+		# resave image as webp to compress it
+		img = Image.open(IMG_PATH)
+		img.save(IMG_PATH, 'webp', quality=100)
+
+		while True:
+			with open(IMG_PATH, 'rb') as f:
+				img_bytes = f.read()
+
+			mib = len(img_bytes) / 1024 / 1024
+			if mib < 1:
+				break
+
+			img = Image.open(IMG_PATH)
+			width = int(img.width * 0.9)
+			height = int(img.height * 0.9)
+			img.resize((width, height), Image.Resampling.LANCZOS)
+			img.save(IMG_PATH, 'webp', quality=75)
 	except Exception:
 		log.error('Failed to write the fetched image.')
 		return
