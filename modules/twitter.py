@@ -1,6 +1,7 @@
 import traceback
 
 import tweepy
+from tweepy import errors
 from tenacity import retry, retry_if_result, stop_after_attempt
 
 from utils.globals import IMG_PATH, cfg, log
@@ -45,6 +46,9 @@ def twitter():
 	log.info('Posting image to Twitter')
 	try:
 		response = v2.create_tweet(text = "", media_ids = [ img ])
+	except errors.TooManyRequests:
+		log.error('Rate limit exceeded! Skipping...')
+		return True
 	except Exception:
 		log.error(f'An error occured while posting the image on Twitter: {traceback.format_exc()}')
 		log.info('Trying again...\n')
