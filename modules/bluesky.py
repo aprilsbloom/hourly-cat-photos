@@ -30,7 +30,7 @@ def bluesky():
 		)
 
 		url = res.uri.split('app.bsky.feed.')[1]
-		log.info(f'Posted image to Bluesky! Link: https://bsky.app/profile/{cfg.get("bluesky.username")}/{url}')
+		log.success(f'Posted image to Bluesky! Link: https://bsky.app/profile/{cfg.get("bluesky.username")}/{url}')
 		return True
 	except Exception:
 		log.error(f'Failed to send image to Bluesky: {traceback.format_exc()}')
