@@ -12,7 +12,7 @@ from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
 
 async def fetch_img():
 	# ensure at least one site is enabled otherwise we're wasting our time
-	if not cfg.get('twitter.enabled') and not cfg.get('mastodon.enabled') and not cfg.get('tumblr.enabled'):
+	if not cfg.get('twitter.enabled') and not cfg.get('mastodon.enabled') and not cfg.get('tumblr.enabled') and not cfg.get('bluesky.enabled'):
 		log.error('No sites are enabled. Please enable at least one site in config.json.')
 		return
 
