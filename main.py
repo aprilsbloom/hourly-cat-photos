@@ -52,7 +52,7 @@ async def fetch_img():
 			with open(IMG_PATH, 'rb') as f:
 				img_bytes = f.read()
 
-			mib = len(img_bytes) / 1024 / 1024
+			mib = len(img_bytes) / 1000 / 100
 			if mib < 1:
 				break
 
