@@ -18,7 +18,14 @@ async def fetch_img():
 
 	log.info('Fetching image from https://thecatapi.com')
 	res = requests.get(url = 'https://api.thecatapi.com/v1/images/search?mime_types=jpg,png', headers = { 'x-api-key': cfg.get('catapi-key') })
-	data = res.json()
+
+	try:
+		data = res.json()
+	except requests.JSONDecodeError:
+		log.error('Failed to fetch image.')
+		log.info('Retrying...')
+		await fetch_img()
+		return
 
 	# catapi sometimes returns things in a list for some reason
 	if isinstance(data, list):
@@ -52,7 +59,7 @@ async def fetch_img():
 			with open(IMG_PATH, 'rb') as f:
 				img_bytes = f.read()
 
-			mib = len(img_bytes) / 1000 / 100
+			mib = len(img_bytes) / 1000 / 1000
 			if mib < 1:
 				break
 
