@@ -9,7 +9,7 @@ from PIL import Image
 from modules import bluesky, mastodon, tumblr, twitter
 from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
 
-
+retry_count = 0
 async def fetch_img():
 	# ensure at least one site is enabled otherwise we're wasting our time
 	if (
@@ -31,8 +31,16 @@ async def fetch_img():
 		data = res.json()
 	except requests.exceptions.JSONDecodeError:
 		log.error('Failed to fetch image.')
-		log.info('Retrying...')
-		await fetch_img()
+		if retry_count == 3:
+			log.info('Retrying...')
+
+			global retry_count
+			retry_count += 1
+
+			await fetch_img()
+		else:
+			log.error('Reached retry limit, giving up.')
+
 		return
 
 	# catapi sometimes returns things in a list for some reason
