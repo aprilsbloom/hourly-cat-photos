@@ -21,7 +21,7 @@ async def fetch_img():
 
 	try:
 		data = res.json()
-	except requests.JSONDecodeError:
+	except requests.exceptions.JSONDecodeError:
 		log.error('Failed to fetch image.')
 		log.info('Retrying...')
 		await fetch_img()
